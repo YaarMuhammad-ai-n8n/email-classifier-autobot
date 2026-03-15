@@ -1,0 +1,378 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b481d705-5004-40e6-b693-6778efb25056",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bshwhwXijGO6JGtG",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.snippet }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Order",
+              "description": "Emails related to placing a new order, purchasing  a product, buying something, order confirmation,  order status, delivery updates, shipping inquiries,  or any message where the customer wants to buy  or has already bought something."
+            },
+            {
+              "category": "enquiry",
+              "description": "Emails asking general questions about products,  services, pricing, availability, how something  works, or any message where the customer wants  information before making a decision. Not a  purchase — just asking."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "1def4aca-d4cf-4db9-b1a6-a7bbfdeb1354",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": "=llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        144,
+        208
+      ],
+      "id": "662fe946-d85c-46d5-a873-cdd8fd420034",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "yrA4aHczTrg0x7ry",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a professional customer support agent. Write a warm, helpful email reply. Only write the email body — no subject line.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a reply to this email: {{ $json.snippet }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "44e1eed7-e2fb-4efe-aad8-012b86603a21",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama3-8b-8192\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a professional customer support agent. Write a warm, helpful email reply. Only write the email body — no subject line.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a reply to this email: {{ $json.snippet }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        96
+      ],
+      "id": "892e901b-cd65-4f4c-8ee4-e6ca3ac9ab4f",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "=Re: {{ $('Gmail Trigger').item.json.subject }}",
+        "message": "={{ $json.choices[0].message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        0
+      ],
+      "id": "9ae9cd07-62d9-420c-b48b-eb6286578e8c",
+      "name": "Send a message",
+      "webhookId": "d6e8a944-6aa6-4b9b-bd61-2f4f2d4635c7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "C4EN5A8yejkF4Lvf",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "=Re: {{ $('Gmail Trigger').item.json.subject }}",
+        "message": "={{ $json.choices[0].message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        144
+      ],
+      "id": "1ef265d5-483e-4f0d-8751-f7808c5d7513",
+      "name": "Send a message1",
+      "webhookId": "5fbd2e4e-df7a-4346-ae53-500b8ac405be",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "C4EN5A8yejkF4Lvf",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1yy8W1vxTFJDGH1f6sJy5pboOGzitIhG6qPcbO_XsvTU",
+          "mode": "list",
+          "cachedResultName": "email logging",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yy8W1vxTFJDGH1f6sJy5pboOGzitIhG6qPcbO_XsvTU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yy8W1vxTFJDGH1f6sJy5pboOGzitIhG6qPcbO_XsvTU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ new Date().toISOString() }}",
+            "Sender Name": "={{ $('Gmail Trigger').item.json.From }}",
+            "Sender Email": "={{ $('Gmail Trigger').item.json.To }}",
+            "Subject": "={{ $('Gmail Trigger').item.json.Subject }}",
+            "Category": "Order",
+            "Status": "Reply Sent"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sender Name",
+              "displayName": "Sender Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sender Email",
+              "displayName": "Sender Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        976,
+        0
+      ],
+      "id": "bbcb95af-87ac-4542-8d58-7acc59dfe27b",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "y9RuE6YNdNFfCHv9",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d21c359d-2e15-452c-a84e-9ba9d56b21d3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "96704e57cf5a95f1955133dc64d08ed811a226c3fca0e4485451dadf773f836f"
+  },
+  "id": "WA5NxQbxqxv1mpeT",
+  "tags": []
+}
